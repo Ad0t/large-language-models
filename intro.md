@@ -100,9 +100,9 @@ Model learns the semantics of the token. (How it understands? Debatable)
 ---
 ## Tokenization
 The question is, which way of tokenizing is best:
-`"The cat is sleeping"`,
-`"The", " cat", " is", " sleeping"`,
-`"T", "h", "e", " ", "c", "a", "t", " ", "i", "s", " ", "s", "l", "e", "e", "p", "i", "n", "g"`
+- `"The cat is sleeping"`,
+- `"The", " cat", " is", " sleeping"`,
+- `"T", "h", "e", " ", "c", "a", "t", " ", "i", "s", " ", "s", "l", "e", "e", "p", "i", "n", "g"`
 Each token requires same amount of compute to process.
 ## Computational Cost
 "The quick brown fox jumps over the lazy dog"
