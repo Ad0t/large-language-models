@@ -194,7 +194,7 @@ LLMs replace each token with the vector embedding.
 0.56] [0.78, 0.90, 0.12, 0.34] [0.84, 0.01, 0.31, 0.03] [0.23, 0.45, 0.67, 0.89] [0.56, 0.78,
 0.90, 0.12] [0.55, 0.66, 0.77, 0.88] [0.78, 0.90, 0.12, 0.34] [0.56, 0.78, 0.90, 0.12]
 ```
--
+
 ---
 But we don't want to tie tokens to vectors, because we want to use same token vocabulary
 for different versions of the model or models, which will have different vector embeddings
