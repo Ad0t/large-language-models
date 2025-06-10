@@ -117,3 +117,120 @@ But there are some issues with word and sentence tokens as well
 - Most words are rare and will not appear enough times in the training data for model to learn their meaning well.
 - Can not construct new words like letters can.
 `For sentence level tokens these issues are even more exaggerated.`
+## Subword tokens
+Instead of: [run, running, play, playing]
+it's tokenized as: [run, play, stay, ing]
+- Can be used to construct words like [running, playing, staying] - AI will learning that adding "ing" to a base verb will convert it to present continuous
+- Requires less computation then processing each letter separately
+- Vocabulary size reduced from 10s of millions to just 100s of thousands
+- Better at understanding texts with spelling mistakes
+## Vector Embedding
+Each token in the vocab will have a corresponding vector embedding (array of numbers).
+``` assuming
+"car" = [0.84, 0.01, 0.31, 0.03]
+"grass" = [0.01, 0.97, 0.89, 0.82]
+```
+In reality, these vectors are thousands of numbers long, and each number captures some
+characteristic of this token, e.g.: quickness, aliveness, greenness, fluffiness, playfulness,
+vehicleness, parallel universeness, regular excerciseness, and who knows what else [we
+don't] - each feature will be a measure of some characteristic, and it will contribute to the
+meaning.
+AI learns by itself what each feature should be about, and the numerical value of it for each
+token, and we don't know what exactly those numbers represent.
+---
+Let's take these 2 tokens as an example.
+```
+"dog" = [0.42, 0.97, 0.95]
+"cat" = [0.73, 0.04, 0.01]
+```
+### Feature (number) 1: Fluffiness Amount
+`How soft, fuzzy, and likely to leave hair on your favorite hoodie?`
+- Dog → 0.42
+Dogs come in all fluff levels, from bald weirdos to walking cotton balls.
+- Cat → 0.73
+Living fur clouds. Built for maximum softness.
+### Feature 2: Willingness to Save Your Life
+`If you're in a lake and can't swim… will it save you?`
+- Dog → 0.97
+Leaps in with heroic urgency. Risks life. Brings floaty.
+- Cat → 0.04
+The one who pushed you into the water.
+### Feature 3: Gratefulness
+`How much it appreciates everything you do for it?`
+- Dog → 0.95
+Thinks you hung the moon. Worships your every move. Applauds your shoe-tying
+skills.
+- Cat → 0.01
+You are but a mere buttler, void of any purpose beyond servitude.
+In reality, features at same positions across tokens don't necessarily encode same
+characteristic, also different tokens can have unique characteristics, or multiple features
+could work together to encode characteristics.
+### Summary
+These vector embeddings aren't manually created by human scientists — the AI learns
+them by reading the entire internet (trillions of words), trying to predict the next token as
+it's reading it, and adjusting vector embeddings for each token and other numbers
+(parameters, that we will talk about later) so its predicted token matches the actual token in
+the training data.
+As it fails to predict the next token during the training, it updates vector embeddings and
+other parameters, causing the correct token from the training data to be more likely next
+time, and incorrect tokens less likely.
+## How LLMs use vector embeddings
+`"The car is fast, and the car is red."`
+- "The" → Vector: [0.12, 0.34, 0.56, 0.78]
+- " car" → Vector: [0.84, 0.01, 0.31, 0.03]
+- " is" → Vector: [0.23, 0.45, 0.67, 0.89]
+- " fast" → Vector: [0.91, 0.12, 0.34, 0.56]
+- " and" → Vector: [0.78, 0.90, 0.12, 0.34]
+- " red." → Vector: [0.56, 0.78, 0.90, 0.12]
+- "," (comma) → Vector: [0.55, 0.66, 0.77, 0.88]
+Usually tokens have space as the first character (" car") - it's more efficient then encoding
+space separately.
+---
+LLMs replace each token with the vector embedding.
+```
+"The car is fast, and the car is red."
+```
+```[0.12, 0.34, 0.56, 0.78] [0.84, 0.01, 0.31, 0.03] [0.23, 0.45, 0.67, 0.89] [0.91, 0.12, 0.34,
+0.56] [0.78, 0.90, 0.12, 0.34] [0.84, 0.01, 0.31, 0.03] [0.23, 0.45, 0.67, 0.89] [0.56, 0.78,
+0.90, 0.12] [0.55, 0.66, 0.77, 0.88] [0.78, 0.90, 0.12, 0.34] [0.56, 0.78, 0.90, 0.12]
+```
+-
+---
+But we don't want to tie tokens to vectors, because we want to use same token vocabulary
+for different versions of the model or models, which will have different vector embeddings
+for the same token.  
+
+So we will also have an array of vector embeddings (array of arrays, matrix), where each
+vector embedding is placed at the same position corresponding to the index of the token.
+```
+[
+[0.12, 0.34, 0.56, 0.78]
+[0.84, 0.01, 0.31, 0.03]
+[0.23, 0.45, 0.67, 0.89]
+[0.91, 0.12, 0.34, 0.56]
+[0.78, 0.90, 0.12, 0.34]
+[0.56, 0.78, 0.90, 0.12]
+[0.55, 0.66, 0.77, 0.88]
+]
+```
+We will place a vector embedding corresponding to the token with index 0 at position 0.  
+Later we will pluck out embedding corresponding to the token's index from the embedding
+matrix.
+## Mapping to Indices
+- "The" : 0
+- "car" : 1
+- "is" : 2
+- "fast,
+- " : 3
+- "and" : 4
+- "red." : 5
+`"The car is fast, and the car is red."`
+`0 1 2 3 4 0 1 2 5`
+---
+For each index (0 1 2 3 4 0 1 2 5) we will pluck out corresponding vector embedding (they
+are arranged to correspond to tokens with the same index.)
+[0.12, 0.34, 0.56, 0.78] [0.84, 0.01, 0.31, 0.03] [0.23, 0.45, 0.67, 0.89] [0.91, 0.12, 0.34,
+0.56] [0.78, 0.90, 0.12, 0.34] [0.84, 0.01, 0.31, 0.03] [0.23, 0.45, 0.67, 0.89] [0.56, 0.78,
+0.90, 0.12] [0.55, 0.66, 0.77, 0.88] [0.78, 0.90, 0.12, 0.34] [0.56, 0.78, 0.90, 0.12]   
+This allows us to easily swap vector embeddings from different models / versions that use
+the same tokenizer.
